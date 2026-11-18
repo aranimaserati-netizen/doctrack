@@ -14,7 +14,7 @@ export default async function PortalLayout({ children }: { children: React.React
           <Button variant="outline" size="sm" type="submit">Sign out</Button>
         </form>
       </header>
-      <main className="mx-auto max-w-4xl p-6">{children}</main>
+      <main className="mx-auto max-w-7xl p-6">{children}</main>
     </div>
   )
 }
