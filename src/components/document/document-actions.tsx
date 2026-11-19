@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { customerSetStatus } from '@/lib/actions/review'
-import { uploadVersion, restoreVersion, markFinal } from '@/lib/actions/versions'
+import { uploadVersion, restoreVersion, markFinal,markRevisedNoChanges } from '@/lib/actions/versions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+
+
 
 const MAX_BYTES = 25 * 1024 * 1024
 
@@ -23,15 +25,18 @@ type Props = {
   viewedVersionId: string
   viewedVersionNumber: number
   nextVersion: number
+  requestMessage?: string | null
+  revisedNote?: string | null
 }
 
 export function DocumentActions(p: Props) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
-  const [mode, setMode] = useState<null | 'changes' | 'upload'>(null)
   const [message, setMessage] = useState('')
   const [note, setNote] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [mode, setMode] = useState<null | 'changes' | 'upload' | 'decline'>(null)
+  const [reason, setReason] = useState('')
 
   if (p.status === 'final') return null
 
@@ -46,6 +51,7 @@ export function DocumentActions(p: Props) {
     toast.success(success)
     setMode(null)
     setMessage('')
+    setReason('')
     setNote('')
     setFile(null)
     router.refresh()
@@ -197,12 +203,32 @@ export function DocumentActions(p: Props) {
           </Button>
         )}
         {p.status === 'changes_requested' && (
-          <p className="text-sm text-muted-foreground">
-            The customer requested changes. Upload a revised version.
+          <div className="w-full space-y-2">
+          <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
+          <p className="font-medium">The customer requested changes.</p>
+          {p.requestMessage && <p className="mt-1">“{p.requestMessage}”</p>}
+          <p className="mt-1 text-xs">
+          Upload a revised version, or mark it as revised without changes and explain why.
           </p>
-        )}
+          </div>
+          <Button
+          variant="outline"
+          disabled={busy}
+          onClick={() => setMode(mode === 'decline' ? null : 'decline')}
+          >
+          Mark as revised (no file change)
+          </Button>
+          </div>
+          )}
         {p.status === 'approved' && (
           <p className="text-sm text-muted-foreground">Approved by the customer.</p>
+        )}
+        {p.status === 'revised' && p.revisedNote && (
+          <div className="w-full rounded-md border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900">
+          <p className="font-medium">The business reviewed your request and made no file changes.</p>
+          <p className="mt-1">Reason: “{p.revisedNote}”</p>
+          <p className="mt-1 text-xs">You can approve this version or request changes again.</p>
+          </div>
         )}
       </div>
 
@@ -231,6 +257,29 @@ export function DocumentActions(p: Props) {
             {busy ? 'Uploading…' : `Upload v${p.nextVersion}`}
           </Button>
         </div>
+      )}
+      {mode === 'decline' && (
+        <div className="space-y-2">
+        <Label htmlFor="reason">Why are no changes being made? (required, the customer will see this)</Label>
+        <Textarea
+        id="reason"
+        rows={3}
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="e.g. Clause 4 is a standard term and can't be changed. See reply on the comment."
+        />
+       <Button
+       disabled={busy || !reason.trim()}
+       onClick={() =>
+        run(
+          () => markRevisedNoChanges({ documentId: p.documentId, note: reason }),
+          'Marked as revised'
+        )
+       }
+       >
+       Confirm: mark as revised
+       </Button>
+       </div>
       )}
     </div>
   )

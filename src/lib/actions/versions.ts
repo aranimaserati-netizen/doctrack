@@ -66,3 +66,23 @@ export async function markFinal(documentId: string): Promise<Result> {
   refresh(documentId)
   return {}
 }
+export async function markRevisedNoChanges(input: {
+  documentId: string
+  note: string
+}): Promise<Result> {
+  const { supabase, profile } = await requireProfile()
+  if (profile.role !== 'business') return { error: 'Not allowed.' }
+
+  const note = input.note.trim()
+  if (!note) return { error: 'Please explain why no changes were made.' }
+  if (note.length > 1000) return { error: 'Explanation is too long (max 1000 characters).' }
+
+  const { error } = await supabase.rpc('mark_revised_no_changes', {
+    p_doc_id: input.documentId,
+    p_note: note,
+  })
+  if (error) return { error: error.message }
+
+  refresh(input.documentId)
+  return {}
+}

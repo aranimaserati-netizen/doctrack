@@ -26,6 +26,8 @@ function describe(e: TimelineEntry): string {
       if (m.to === 'approved') return 'approved this version'
       if (m.to === 'changes_requested')
         return `requested changes${m.message ? `: “${m.message}”` : ''}`
+      if (m.to === 'revised' && m.no_file_change)
+        return `marked the document as revised with no file changes: “${m.note ?? ''}”`
       return `status changed to ${String(m.to).replaceAll('_', ' ')}`
     default:
       return e.type

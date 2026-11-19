@@ -75,6 +75,16 @@ export async function DocumentPage({
     .eq('document_id', id)
     .order('created_at', { ascending: false })
   const events = (eventRows ?? []) as any[]
+  // Latest status change drives the messages shown above the action buttons
+const lastStatus = events.find((e) => e.type === 'status_changed')
+const requestMessage: string | null =
+  doc.status === 'changes_requested' && lastStatus?.metadata?.to === 'changes_requested'
+    ? (lastStatus.metadata.message ?? null)
+    : null
+const revisedNote: string | null =
+  doc.status === 'revised' && lastStatus?.metadata?.no_file_change
+    ? (lastStatus.metadata.note ?? null)
+    : null
 
   const existedThen = (iso: string) => asOfMs === null || Date.parse(iso) <= asOfMs
 
@@ -185,6 +195,8 @@ export async function DocumentPage({
         viewedVersionId={viewed.id}
         viewedVersionNumber={viewed.version_number}
         nextVersion={versions[versions.length - 1].version_number + 1}
+        requestMessage={requestMessage}
+        revisedNote={revisedNote}
       />
 
       {signed?.signedUrl ? (
