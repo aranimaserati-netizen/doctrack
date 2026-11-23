@@ -63,7 +63,7 @@ export function NewDocumentForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="org">Customer</Label>
+        <Label htmlFor="org">Dealer</Label>
         <select
           id="org"
           name="org"
@@ -71,7 +71,7 @@ export function NewDocumentForm({
           defaultValue={defaultOrg ?? ''}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
         >
-          <option value="" disabled>Select a customer…</option>
+          <option value="" disabled>Select a dealer</option>
           {orgs.map((o) => (
             <option key={o.id} value={o.id}>{o.name}</option>
           ))}

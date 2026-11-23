@@ -206,19 +206,26 @@ export function DocumentActions(p: Props) {
         {p.status === 'changes_requested' && (
           <div className="w-full space-y-2">
           <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
-          <p className="font-medium">The customer requested changes.</p>
+          <p className="font-medium">The dealer requested changes.</p>
           {p.requestMessage && <p className="mt-1">“{p.requestMessage}”</p>}
-          <p className="mt-1 text-xs">
+          {/* <p className="mt-1 text-xs">
           Upload a revised version, or mark it as revised without changes and explain why.
-          </p>
+          </p> */}
           </div>
-          <LoadingButton
+          {/* <LoadingButton
           variant="outline"
           loading={busy}
           onClick={() => setMode(mode === 'decline' ? null : 'decline')}
           >
           Mark as revised (no file change)
-          </LoadingButton>
+          </LoadingButton> */}
+          <Button
+  disabled={busy}
+  className="bg-[#7C7AA6] text-white transition-colors hover:bg-[#65638f]"
+  onClick={() => setMode(mode === 'decline' ? null : 'decline')}
+>
+  Mark as revised 
+</Button>
           </div>
           )}
         {p.status === 'approved' && (
@@ -261,7 +268,7 @@ export function DocumentActions(p: Props) {
       )}
       {mode === 'decline' && (
         <div className="space-y-2">
-        <Label htmlFor="reason">Why are no changes being made? (required, the customer will see this)</Label>
+        <Label htmlFor="reason">Why are no changes being made? (required, the dealer will see this)</Label>
         <Textarea
         id="reason"
         rows={3}
@@ -269,7 +276,7 @@ export function DocumentActions(p: Props) {
         onChange={(e) => setReason(e.target.value)}
         placeholder="e.g. Clause 4 is a standard term and can't be changed. See reply on the comment."
         />
-       <LoadingButton
+       {/* <LoadingButton
        loading={busy || !reason.trim()}
        onClick={() =>
         run(
@@ -279,7 +286,19 @@ export function DocumentActions(p: Props) {
        }
        >
        Confirm: mark as revised
-       </LoadingButton>
+       </LoadingButton> */}
+       <Button
+  disabled={!reason.trim() || busy}
+  className="bg-[#7C7AA6] text-white hover:bg-[#65638f] disabled:opacity-50"
+  onClick={() =>
+    run(
+      () => markRevisedNoChanges({ documentId: p.documentId, note: reason }),
+      'Marked as revised'
+    )
+  }
+>
+  {busy ? 'Saving…' : 'Confirm: mark as revised'}
+</Button>
        </div>
       )}
     </div>

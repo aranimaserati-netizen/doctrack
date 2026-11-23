@@ -48,7 +48,7 @@ export function AppShell({
             </Link>
           )}
           <form action={signOut} className="flex items-center gap-3">
-            {/* <span className="hidden text-sm text-muted-foreground md:inline">{email}</span> */}
+            <span className="hidden text-sm text-muted-foreground md:inline">{email}</span>
             <SubmitButton variant="outline" size="sm" pendingText="Signing out…">
               Sign out
             </SubmitButton>
