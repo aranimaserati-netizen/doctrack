@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { LoadingButton } from '@/components/loading-button'
 
 
 
@@ -103,24 +104,24 @@ export function DocumentActions(p: Props) {
       <div className="space-y-3 rounded-md border p-3">
         <div className="flex flex-wrap items-center gap-2">
           {canApprove && (
-            <Button
-              disabled={busy}
+            <LoadingButton
+              loading={busy}
               onClick={() =>
                 confirm('Approve this version?') &&
                 run(() => customerSetStatus(p.documentId, 'approve'), 'Version approved')
               }
             >
               Approve
-            </Button>
+            </LoadingButton>
           )}
           {canRequest && (
-            <Button
+            <LoadingButton
               variant="outline"
-              disabled={busy}
+              loading={busy}
               onClick={() => setMode(mode === 'changes' ? null : 'changes')}
             >
               Request changes
-            </Button>
+            </LoadingButton>
           )}
           {p.status === 'changes_requested' && (
             <p className="text-sm text-muted-foreground">
@@ -144,14 +145,14 @@ export function DocumentActions(p: Props) {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g. Please revise clause 4 and the payment terms."
             />
-            <Button
-              disabled={busy}
+            <LoadingButton
+              loading={busy}
               onClick={() =>
                 run(() => customerSetStatus(p.documentId, 'request_changes', message), 'Changes requested')
               }
             >
               Send request
-            </Button>
+            </LoadingButton>
           </div>
         )}
       </div>
@@ -163,8 +164,8 @@ export function DocumentActions(p: Props) {
     if (!p.canRestore) return null
     return (
       <div className="flex flex-wrap items-center gap-3 rounded-md border p-3">
-        <Button
-          disabled={busy}
+        <LoadingButton
+          loading={busy}
           onClick={() =>
             confirm(`Restore v${p.viewedVersionNumber} as a new version? Nothing is deleted.`) &&
             run(
@@ -174,7 +175,7 @@ export function DocumentActions(p: Props) {
           }
         >
           Restore v{p.viewedVersionNumber} as new version
-        </Button>
+        </LoadingButton>
         <p className="text-sm text-muted-foreground">
           Creates v{p.nextVersion} from this file. All history stays intact.
         </p>
@@ -186,13 +187,13 @@ export function DocumentActions(p: Props) {
   return (
     <div className="space-y-3 rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Button disabled={busy} onClick={() => setMode(mode === 'upload' ? null : 'upload')}>
+        <LoadingButton loading={busy} onClick={() => setMode(mode === 'upload' ? null : 'upload')}>
           Upload new version
-        </Button>
+        </LoadingButton>
         {p.status === 'approved' && (
-          <Button
+          <LoadingButton
             variant="outline"
-            disabled={busy}
+            loading={busy}
             onClick={() =>
               confirm(
                 `Mark v${p.viewedVersionNumber} as the FINAL version? This locks the document: no more comments or versions.`
@@ -200,7 +201,7 @@ export function DocumentActions(p: Props) {
             }
           >
             Mark as final
-          </Button>
+          </LoadingButton>
         )}
         {p.status === 'changes_requested' && (
           <div className="w-full space-y-2">
@@ -211,13 +212,13 @@ export function DocumentActions(p: Props) {
           Upload a revised version, or mark it as revised without changes and explain why.
           </p>
           </div>
-          <Button
+          <LoadingButton
           variant="outline"
-          disabled={busy}
+          loading={busy}
           onClick={() => setMode(mode === 'decline' ? null : 'decline')}
           >
           Mark as revised (no file change)
-          </Button>
+          </LoadingButton>
           </div>
           )}
         {p.status === 'approved' && (
@@ -253,9 +254,9 @@ export function DocumentActions(p: Props) {
               placeholder="e.g. Updated clause 4 per customer comment"
             />
           </div>
-          <Button disabled={busy} onClick={submitNewVersion}>
+          <LoadingButton loading={busy} onClick={submitNewVersion}>
             {busy ? 'Uploading…' : `Upload v${p.nextVersion}`}
-          </Button>
+          </LoadingButton>
         </div>
       )}
       {mode === 'decline' && (
@@ -268,8 +269,8 @@ export function DocumentActions(p: Props) {
         onChange={(e) => setReason(e.target.value)}
         placeholder="e.g. Clause 4 is a standard term and can't be changed. See reply on the comment."
         />
-       <Button
-       disabled={busy || !reason.trim()}
+       <LoadingButton
+       loading={busy || !reason.trim()}
        onClick={() =>
         run(
           () => markRevisedNoChanges({ documentId: p.documentId, note: reason }),
@@ -278,7 +279,7 @@ export function DocumentActions(p: Props) {
        }
        >
        Confirm: mark as revised
-       </Button>
+       </LoadingButton>
        </div>
       )}
     </div>

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { setEmailNotifications } from '@/lib/actions/settings'
+import { Loader2 } from 'lucide-react'
 
 export function NotificationToggle({ initial, email }: { initial: boolean; email: string }) {
   const [on, setOn] = useState(initial)
@@ -32,7 +33,10 @@ export function NotificationToggle({ initial, email }: { initial: boolean; email
           content; you sign in to read the details.
         </p>
       </div>
-      <Switch id="notif" checked={on} disabled={busy} onCheckedChange={change} />
-    </div>
+      <div className="flex items-center gap-2">
+       {busy && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+       <Switch id="notif" checked={on} disabled={busy} onCheckedChange={change} />
+       </div>
+      </div>
   )
 }

@@ -128,3 +128,52 @@
     @apply font-sans;
   }
 }
+
+/* Glossy download button with a moving light reflection */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-shine:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+/* static glossy highlight on the top half */
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+/* Subtle navy button with a gentle sheen on hover */
+.btn-soft {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #3a4166, #2f3556);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(47, 53, 86, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-soft:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(47, 53, 86, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-soft::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.6s;
+  pointer-events: none;
+}
+.btn-soft:hover::after { left: 130%; }

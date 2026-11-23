@@ -8,6 +8,7 @@ import { createDocument } from '@/lib/actions/documents'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingButton } from '@/components/loading-button'
 
 const MAX_BYTES = 25 * 1024 * 1024
 
@@ -88,7 +89,9 @@ export function NewDocumentForm({
         <Label htmlFor="note">Note (optional)</Label>
         <Input id="note" name="note" placeholder="Initial upload" />
       </div>
-      <Button type="submit" disabled={busy}>{busy ? 'Uploading…' : 'Upload'}</Button>
+      <LoadingButton type="submit" loading={busy} className="h-11 w-full text-base">
+       {busy ? 'Uploading… please keep this page open' : 'Upload'}
+      </LoadingButton>
     </form>
   )
 }

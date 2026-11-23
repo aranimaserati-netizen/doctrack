@@ -12,7 +12,7 @@ export default async function Portal() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">My documents</h1>
+      <h1 className="text-2xl font-semibold">Commercial Policy</h1>
       {docs?.length === 0 && <p className="text-muted-foreground">Nothing shared with you yet.</p>}
       <ul className="divide-y rounded-md border">
         {docs?.map((d) => (
