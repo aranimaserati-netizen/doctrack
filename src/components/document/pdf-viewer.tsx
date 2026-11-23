@@ -8,6 +8,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import type { CommentRow, Draft, Rect } from '@/lib/types'
+import { LoadingButton } from '@/components/loading-button'
+import {PageLoader} from '@/components/page-loader'
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -120,7 +122,7 @@ export default function PdfViewer({ fileUrl, comments, activeId, readOnly, onSub
           <Document
             file={fileUrl}
             onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-            loading={<p className="p-8 text-sm text-muted-foreground">Loading document…</p>}
+            loading={<p className="p-8 text-sm text-muted-foreground"><PageLoader label="Loading document…"/></p>}
             error={
               <p className="p-8 text-sm text-red-600">
                 Could not load the PDF. The secure link may have expired, so refresh the page.
@@ -190,9 +192,9 @@ export default function PdfViewer({ fileUrl, comments, activeId, readOnly, onSub
               <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
                 Cancel
               </Button>
-              <Button size="sm" disabled={!body.trim() || saving} onClick={submit}>
-                {saving ? 'Saving…' : 'Comment'}
-              </Button>
+              <LoadingButton size="sm" loading={saving} disabled={!body.trim()} onClick={submit}>
+               {saving ? 'Saving…' : 'Comment'}
+              </LoadingButton>
             </div>
           </div>
         )}

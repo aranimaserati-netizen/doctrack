@@ -8,6 +8,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { DocumentWorkspace } from './workspace'
 import { DocumentActions } from './document-actions'
 import type { CommentRow, Thread, TimelineEntry, VersionRow } from '@/lib/types'
+import { ArrowLeft, Download } from 'lucide-react'
 
 export async function DocumentPage({
   id,
@@ -127,25 +128,33 @@ const revisedNote: string | null =
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+            <Link
+             href={backHref}
+             aria-label="Back to documents"
+             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#BFCBD0] bg-white/80 text-[#2F3556] shadow-[0_4px_14px_rgba(47,53,86,0.18)] transition hover:-translate-x-0.5 hover:bg-white hover:shadow-[0_6px_18px_rgba(47,53,86,0.25)]"
+            >
+            <ArrowLeft className="h-5 w-5" />
+            </Link>
+
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href={backHref} className="text-sm text-muted-foreground hover:underline">
-            ← Back
-          </Link>
-          <h1 className="text-2xl font-semibold">{doc.title}</h1>
+          <h1 className="text-3xl font-bold">{doc.title}</h1>
           <p className="text-sm text-muted-foreground">
             {profile.role === 'business' && `${(doc.customer_orgs as any)?.name} · `}
-            v{viewed.version_number} · {viewed.note}
+            {viewed.note}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline">v{viewed.version_number}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex items-center rounded-full border border-[#2F3556]/30 bg-white/70 px-4 py-1.5 text-sm font-bold text-[#2F3556] shadow-sm">
+            Version {viewed.version_number}
+          </span>
           <StatusBadge status={doc.status} />
           <a
-            href={`/api/versions/${viewed.id}/download`}
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          href={`/api/versions/${viewed.id}/download`}
+          className="btn-soft inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold"
           >
-            Download
+          <Download className="h-4 w-4" />
+          Download
           </a>
         </div>
       </div>

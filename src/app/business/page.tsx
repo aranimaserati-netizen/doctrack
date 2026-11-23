@@ -11,7 +11,7 @@ export default async function BusinessDashboard() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">All customer documents</h1>
+      <h1 className="text-2xl font-semibold">Commercial Policy Documents</h1>
       {docs?.length === 0 && <p className="text-muted-foreground">No documents yet.</p>}
       <ul className="divide-y rounded-md border">
         {docs?.map((d: any) => (

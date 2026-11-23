@@ -11,7 +11,7 @@ export default async function CustomersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Customers</h1>
+      <h1 className="text-2xl font-semibold">Dealers</h1>
       <ul className="divide-y rounded-md border">
         {orgs?.map((o: any) => (
           <li key={o.id} className="flex items-center justify-between p-4">
@@ -32,9 +32,9 @@ export default async function CustomersPage() {
           </li>
         ))}
       </ul>
-      <p className="text-sm text-muted-foreground">
+      {/* <p className="text-sm text-muted-foreground">
         Customer organizations and user accounts are created manually in Supabase for now.
-      </p>
+      </p> */}
     </div>
   )
 }
