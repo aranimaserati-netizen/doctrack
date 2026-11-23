@@ -88,11 +88,11 @@ export function Timeline({
             <>
               <p className="text-sm">
                 <span className="font-medium">{e.actor_name}</span>{' '}
-                {e.actor_role && (
+                {/* {e.actor_role && (
                   <Badge variant="secondary" className="mr-1 text-[10px] capitalize">
                     {e.actor_role}
                   </Badge>
-                )}
+                )} */}
                 {describe(e)}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">

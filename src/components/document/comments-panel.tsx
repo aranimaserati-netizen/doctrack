@@ -23,11 +23,13 @@ function Author({ c }: { c: CommentRow }) {
       <span className={`text-sm font-bold ${nameColor[role] ?? 'text-[#2F3556]'}`}>
         {c.author?.full_name ?? 'Unknown'}
       </span>
-      {role && (
+
+      {/* the customer and business thing */}
+      {/* {role && (
         <span className="text-[10px] font-medium uppercase tracking-wide text-[#2F3556]/50">
           {role}
         </span>
-      )}
+      )} */}
       <time className="ml-auto text-xs text-[#2F3556]/50" suppressHydrationWarning>
         {new Date(c.created_at).toLocaleString([], {
           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
