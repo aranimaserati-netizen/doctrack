@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { addComment } from '@/lib/actions/comments'
 import { CommentsPanel } from './comments-panel'
 import { Timeline } from './timeline'
-import type { Draft, Thread, TimelineEntry, VersionRow } from '@/lib/types'
+import { CommentTip } from './comment-tip'
+import type { Draft, Thread, TimelineEntry } from '@/lib/types'
 
 const PdfViewer = dynamic(() => import('./pdf-viewer'), {
   ssr: false,
@@ -16,27 +18,20 @@ const PdfViewer = dynamic(() => import('./pdf-viewer'), {
 export function DocumentWorkspace({
   documentId,
   versionId,
-  currentVersionId,
   fileUrl,
   threads,
   timeline,
-  versions,
-  activeAt,
   readOnly,
 }: {
   documentId: string
   versionId: string
-  currentVersionId: string
   fileUrl: string
   threads: Thread[]
   timeline: TimelineEntry[]
-  versions: VersionRow[]
-  activeAt: string | null
   readOnly: boolean
 }) {
-  // Keep the first signed URL so the PDF doesn't reload (and lose scroll
-  // position) every time the page data refreshes. The parent remounts this
-  // component with a new key when the viewed version changes.
+  const router = useRouter()
+  // Keep the first signed URL so the PDF does not reload after every comment
   const [stableUrl] = useState(fileUrl)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [tab, setTab] = useState<'comments' | 'history'>('comments')
@@ -55,6 +50,7 @@ export function DocumentWorkspace({
       return false
     }
     toast.success('Comment added')
+    router.refresh()
     return true
   }
 
@@ -63,52 +59,44 @@ export function DocumentWorkspace({
     document.getElementById(`hl-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  // Highlights only appear on the version they were made on
-  const highlights = threads.filter((t) => t.version_id === versionId)
-
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <PdfViewer
-        fileUrl={stableUrl}
-        comments={highlights}
-        activeId={activeId}
-        readOnly={readOnly}
-        onSubmit={handleSubmit}
-      />
+      <div className="relative min-w-0">
+        <PdfViewer
+          fileUrl={stableUrl}
+          comments={threads}
+          activeId={activeId}
+          readOnly={readOnly}
+          onSubmit={handleSubmit}
+        />
+        {!readOnly && <CommentTip />}
+      </div>
 
-      <aside className="rounded-md border lg:h-[78vh] lg:overflow-auto">
-        <div className="sticky top-0 z-10 flex border-b bg-background text-sm">
+      <aside className="rounded-md border border-[#BFCBD0] bg-white/80 lg:h-[78vh] lg:overflow-auto">
+        <div className="sticky top-0 z-10 flex border-b border-[#BFCBD0] bg-white text-sm">
           {(['comments', 'history'] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
               className={`flex-1 px-3 py-2 capitalize ${
-                tab === t ? 'border-b-2 border-foreground font-medium' : 'text-muted-foreground'
+                tab === t ? 'border-b-2 border-[#2F3556] font-semibold' : 'text-[#2F3556]/60'
               }`}
             >
-              {t === 'history' ? 'History' : 'Comments'}
+              {t}
             </button>
           ))}
         </div>
-
         {tab === 'comments' ? (
           <CommentsPanel
             documentId={documentId}
             threads={threads}
-            viewedVersionId={versionId}
             activeId={activeId}
             onSelect={handleSelect}
             readOnly={readOnly}
           />
         ) : (
-          <Timeline
-            entries={timeline}
-            versions={versions}
-            currentVersionId={currentVersionId}
-            viewedVersionId={versionId}
-            activeAt={activeAt}
-          />
+          <Timeline entries={timeline} />
         )}
       </aside>
     </div>

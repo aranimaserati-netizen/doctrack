@@ -19,7 +19,6 @@ export async function replyToComment(input: {
   body: string
 }): Promise<Result> {
   const { supabase, profile } = await requireProfile()
-
   const body = input.body.trim()
   if (!body || body.length > 5000) return { error: 'Reply must be 1-5000 characters.' }
 
@@ -39,53 +38,46 @@ export async function replyToComment(input: {
   })
   if (error) return { error: error.message }
 
-  // NEW
   await notifyDocumentEvent({
     documentId: input.documentId,
     kind: 'reply',
     actorName: profile.full_name ?? profile.email ?? 'Someone',
   })
-
   refresh(input.documentId)
   return {}
 }
 
-export async function setCommentResolved(
-  documentId: string,
-  commentId: string,
-  resolved: boolean
-): Promise<Result> {
+export async function setCommentResolved(documentId: string, commentId: string, resolved: boolean): Promise<Result> {
   const { supabase } = await requireProfile()
-  const { error } = await supabase.rpc('set_comment_resolved', {
-    p_comment_id: commentId,
-    p_resolved: resolved,
-  })
+  const { error } = await supabase.rpc('set_comment_resolved', { p_comment_id: commentId, p_resolved: resolved })
   if (error) return { error: error.message }
   refresh(documentId)
   return {}
 }
 
-export async function customerSetStatus(
-  documentId: string,
-  action: 'approve' | 'request_changes',
-  message?: string
-): Promise<Result> {
-  // CHANGED: also take `profile` so we know who is acting
+export async function approveDocument(documentId: string): Promise<Result> {
   const { supabase, profile } = await requireProfile()
-  const { error } = await supabase.rpc('customer_set_status', {
-    p_doc_id: documentId,
-    p_action: action,
-    p_message: message?.trim() || null,
-  })
+  const { error } = await supabase.rpc('customer_approve', { p_doc_id: documentId })
   if (error) return { error: error.message }
-
-  // NEW
   await notifyDocumentEvent({
     documentId,
-    kind: action === 'approve' ? 'approved' : 'changes_requested',
+    kind: 'approved',
     actorName: profile.full_name ?? profile.email ?? 'Someone',
   })
+  refresh(documentId)
+  return {}
+}
 
+export async function markFinal(documentId: string): Promise<Result> {
+  const { supabase, profile } = await requireProfile()
+  if (profile.role !== 'business') return { error: 'Not allowed.' }
+  const { error } = await supabase.rpc('mark_final', { p_doc_id: documentId })
+  if (error) return { error: error.message }
+  await notifyDocumentEvent({
+    documentId,
+    kind: 'final',
+    actorName: profile.full_name ?? profile.email ?? 'Someone',
+  })
   refresh(documentId)
   return {}
 }

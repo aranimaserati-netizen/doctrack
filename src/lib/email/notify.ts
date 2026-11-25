@@ -9,6 +9,7 @@ export type NotifyKind =
   | 'new_version'
   | 'revised_no_changes'
   | 'final'
+  | 'new_document'
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -34,6 +35,10 @@ const wording: Record<NotifyKind, (actor: string, title: string) => { subject: s
     subject: `Final version: “${t}”`,
     line: `${a} marked “${t}” as final. The document is now locked.`,
   }),
+  new_document: (a, t) => ({
+  subject: `New document shared: “${t}”`,
+  line: `${a} shared a new document with you: “${t}”.`,
+}),
 }
 
 export async function notifyDocumentEvent(args: {
