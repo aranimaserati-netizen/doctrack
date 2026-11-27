@@ -144,7 +144,7 @@ export default function PdfViewer({ fileUrl, comments, activeId, readOnly, onSub
                           <div
                             key={i}
                             id={i === 0 ? `hl-${c.id}` : undefined}
-                            className={`absolute ${c.resolved ? 'bg-[#8CC063]' : 'bg-[#7CA6BC]'}`}
+                            className={`absolute ${c.resolved ? 'bg-[#8CC063]' : 'bg-[#FACC15]'}`}
                             style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.w}%`, height: `${r.h}%` }}
                           />
                         ))}

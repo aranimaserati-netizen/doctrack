@@ -1,6 +1,13 @@
 import { DocumentPage } from '@/components/document/document-page'
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ v?: string }>
+}) {
   const { id } = await params
-  return <DocumentPage id={id} />
+  const { v } = await searchParams
+  return <DocumentPage id={id} v={v} />
 }

@@ -7,7 +7,9 @@ function describe(e: TimelineEntry): string {
   const m = e.metadata ?? {}
   switch (e.type) {
     case 'version_uploaded':
-      return 'uploaded the document'
+      return Number(m.version_number) > 1
+      ? `uploaded version ${m.version_number}${m.note ? `: “${m.note}”` : ''}`
+      : 'uploaded the document'
     case 'comment_added':
       return `commented: “${m.excerpt ?? ''}”`
     case 'reply_added':
@@ -19,6 +21,7 @@ function describe(e: TimelineEntry): string {
     case 'status_changed':
       if (m.to === 'final') return 'marked the document as FINAL and locked it'
       if (m.to === 'approved') return 'approved the document'
+      if (m.to === 'revised') return 'sent a new version for review'
       return `changed the status to ${String(m.to).replaceAll('_', ' ')}`
     default:
       return e.type.replaceAll('_', ' ')
@@ -35,7 +38,7 @@ export function Timeline({ entries }: { entries: TimelineEntry[] }) {
             <p className="text-sm">
               <span className="font-bold">{e.actor_name}</span> {describe(e)}
             </p>
-            <p className="mt-0.5 text-xs text-[#2F3556]/50">
+            <p className="mt-0.5 text-xs font-semibold text-[#2F3556]/80">
               <LocalTime iso={e.created_at} />
             </p>
           </li>

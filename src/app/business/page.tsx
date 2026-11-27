@@ -28,11 +28,11 @@ export default async function Dealers() {
                   <p className="text-sm text-[#2F3556]/60">
                     {o.profiles?.map((p: any) => p.full_name).filter(Boolean).join(', ') || 'No users yet'}
                   </p>
-                  <p className="text-xs">
+                  {/* <p className="text-xs">
                     <span className="font-semibold text-[#3E6A8F]">{sales} sales</span>
                     {' · '}
                     <span className="font-semibold text-[#9A6B3F]">{after} after sales</span>
-                  </p>
+                  </p> */}
                 </div>
                 <ChevronRight className="h-6 w-6 text-[#2F3556]/50" />
               </Link>

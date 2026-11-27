@@ -18,7 +18,7 @@ function Author({ c }: { c: CommentRow }) {
       <span className={`text-sm font-bold ${nameColor[c.author?.role ?? ''] ?? 'text-[#2F3556]'}`}>
         {c.author?.full_name ?? 'Unknown'}
       </span>
-      <time className="ml-auto text-xs text-[#2F3556]/50" suppressHydrationWarning>
+      <time className="ml-auto text-xs font-semibold text-[#2F3556]/80" suppressHydrationWarning>
         {new Date(c.created_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
       </time>
     </div>
@@ -116,6 +116,7 @@ export function CommentsPanel({
               t.resolved
                 ? 'border-[#C5E0A8] border-l-[#7FB55A] bg-[#EAF5DD]'
                 : 'border-[#BFCBD0] border-l-[#2F3556] bg-[#F1F4F6]'
+                // 'border-[#F5E39A] border-l-[#FACC15] bg-[#FEF9DB]'
             } ${activeId === t.id ? 'ring-2 ring-[#7CA6BC] ring-offset-1' : ''}`}
           >
             {t.resolved && (

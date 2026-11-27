@@ -15,9 +15,9 @@ export function DocCard(p: { href: string; title: string; category: Category; st
       className={`flex items-center justify-between gap-4 rounded-lg border border-l-4 p-4 shadow-sm transition hover:shadow-md ${card[p.category]}`}
     >
       <div className="space-y-1">
-        <CategoryBadge category={p.category} />
+        {/* <CategoryBadge category={p.category} /> */}
         <p className="text-lg font-semibold text-[#2F3556]">{p.title}</p>
-        <p className="text-xs text-[#2F3556]/60">{new Date(p.date).toLocaleDateString()}</p>
+        <p className="mt-0.5 text-xs font-semibold text-[#2F3556]/80">{new Date(p.date).toLocaleDateString()}</p>
       </div>
       <StatusBadge status={p.status} />
     </Link>

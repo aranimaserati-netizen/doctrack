@@ -1,15 +1,16 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, Download, Lock } from 'lucide-react'
+import { ArrowLeft, Download, History, Lock } from 'lucide-react'
 import { requireProfile } from '@/lib/auth'
 import { StatusBadge } from '@/components/status-badge'
 import { CategoryBadge } from '@/components/category-badge'
-import { categoryToSlug, type Category } from '@/lib/categories'
+import type { Category } from '@/lib/categories'
 import { DocumentWorkspace } from './workspace'
 import { DocumentActions } from './document-actions'
+import { VersionBar } from './version-bar'
 import type { CommentRow, Thread, TimelineEntry } from '@/lib/types'
 
-export async function DocumentPage({ id }: { id: string }) {
+export async function DocumentPage({ id, v }: { id: string; v?: string }) {
   const { supabase, profile } = await requireProfile()
 
   // Row-level security: another dealer's document comes back null, which gives a 404
@@ -20,21 +21,27 @@ export async function DocumentPage({ id }: { id: string }) {
     .maybeSingle()
   if (!doc || !doc.current_version_id) notFound()
 
-  const { data: file } = await supabase
+  const { data: versionRows } = await supabase
     .from('document_versions')
-    .select('id, file_path')
-    .eq('id', doc.current_version_id)
-    .single()
-  if (!file) notFound()
+    .select('id, version_number, file_path, created_at')
+    .eq('document_id', id)
+    .order('version_number', { ascending: true })
+  const versions = versionRows ?? []
 
-  const { data: signed } = await supabase.storage.from('documents').createSignedUrl(file.file_path, 60)
+  const current = versions.find((x) => x.id === doc.current_version_id)
+  if (!current) notFound()
+  const viewed = versions.find((x) => x.id === v) ?? current
+  const isLatest = viewed.id === current.id
+  const nextVersion = Math.max(...versions.map((x) => x.version_number)) + 1
 
+  const { data: signed } = await supabase.storage.from('documents').createSignedUrl(viewed.file_path, 60)
+
+  // Only the comments of the version being viewed
   const { data: commentRows } = await supabase
     .from('comments')
-    .select(
-      'id, parent_id, body, page_number, selected_text, position, resolved, created_at, author:profiles!author_id(full_name, role)'
-    )
+    .select('id, parent_id, body, page_number, selected_text, position, resolved, created_at, author:profiles!author_id(full_name, role)')
     .eq('document_id', id)
+    .eq('version_id', viewed.id)
     .order('created_at', { ascending: true })
 
   const { data: eventRows } = await supabase
@@ -58,9 +65,9 @@ export async function DocumentPage({ id }: { id: string }) {
 
   const category = doc.category as Category
   const isBusiness = profile.role === 'business'
-  const backHref = isBusiness
-    ? `/business/dealers/${doc.customer_org_id}?tab=${categoryToSlug(category)}`
-    : '/portal'
+  const backHref = isBusiness ? `/business/dealers/${doc.customer_org_id}` : '/portal'
+  const latestHref = `${isBusiness ? '/business' : '/portal'}/documents/${doc.id}`
+  const isFinal = doc.status === 'final'
 
   return (
     <div className="space-y-4 text-[#2F3556]">
@@ -79,9 +86,12 @@ export async function DocumentPage({ id }: { id: string }) {
           {isBusiness && <p className="text-sm text-[#2F3556]/60">{(doc.customer_orgs as any)?.name}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-[#2F3556]/30 bg-white/70 px-4 py-1.5 text-sm font-bold">
+            Version {viewed.version_number}
+          </span>
           <StatusBadge status={doc.status} />
           <a
-            href={`/api/versions/${file.id}/download`}
+            href={`/api/versions/${viewed.id}/download`}
             className="btn-soft inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-semibold"
           >
             <Download className="h-4 w-4" />
@@ -90,23 +100,46 @@ export async function DocumentPage({ id }: { id: string }) {
         </div>
       </div>
 
-      {doc.status === 'final' && (
+      {isFinal && (
         <div className="flex items-center gap-3 rounded-md border border-[#C5E0A8] bg-[#EAF5DD] px-4 py-3 text-sm text-[#3F6A25]">
           <Lock className="h-4 w-4" />
           This is the final version. The document is locked.
         </div>
       )}
 
-      <DocumentActions documentId={doc.id} role={profile.role} status={doc.status} />
+      <VersionBar
+        versions={versions}
+        currentId={current.id}
+        viewedId={viewed.id}
+        canUpload={isBusiness && !isFinal && isLatest}
+        orgId={doc.customer_org_id}
+        documentId={doc.id}
+        nextVersion={nextVersion}
+      />
+
+      {!isLatest && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          <span className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            You are viewing version {viewed.version_number} and its comments. Read-only.
+          </span>
+          <Link href={latestHref} className="font-semibold underline">
+            Back to latest (v{current.version_number})
+          </Link>
+        </div>
+      )}
+
+      {isLatest && <DocumentActions documentId={doc.id} role={profile.role} status={doc.status} />}
 
       {signed?.signedUrl ? (
         <DocumentWorkspace
+          key={viewed.id}
           documentId={doc.id}
-          versionId={file.id}
+          versionId={viewed.id}
           fileUrl={signed.signedUrl}
           threads={threads}
           timeline={timeline}
-          readOnly={doc.status === 'final'}
+          readOnly={isFinal || !isLatest}
         />
       ) : (
         <p className="text-sm text-red-600">Could not load the file. Try refreshing.</p>
