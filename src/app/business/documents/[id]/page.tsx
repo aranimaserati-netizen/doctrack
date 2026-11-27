@@ -5,9 +5,9 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ v?: string; at?: string }>
+  searchParams: Promise<{ v?: string }>
 }) {
   const { id } = await params
-  const sp = await searchParams
-  return <DocumentPage id={id} backHref="/business" searchParams={sp} />
+  const { v } = await searchParams
+  return <DocumentPage id={id} v={v} />
 }

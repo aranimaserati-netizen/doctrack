@@ -3,304 +3,67 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
-import { customerSetStatus } from '@/lib/actions/review'
-import { uploadVersion, restoreVersion, markFinal,markRevisedNoChanges } from '@/lib/actions/versions'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { CheckCircle2, Lock } from 'lucide-react'
+import { approveDocument, markFinal } from '@/lib/actions/review'
 import { LoadingButton } from '@/components/loading-button'
 
-
-
-const MAX_BYTES = 25 * 1024 * 1024
-
-type Props = {
+export function DocumentActions({
+  documentId,
+  role,
+  status,
+}: {
   documentId: string
-  orgId: string
   role: 'business' | 'customer'
   status: string
-  isLive: boolean          // viewing the latest version, not a historical point
-  canRestore: boolean      // viewing an older version
-  viewedVersionId: string
-  viewedVersionNumber: number
-  nextVersion: number
-  requestMessage?: string | null
-  revisedNote?: string | null
-}
-
-export function DocumentActions(p: Props) {
+}) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState('')
-  const [note, setNote] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const [mode, setMode] = useState<null | 'changes' | 'upload' | 'decline'>(null)
-  const [reason, setReason] = useState('')
 
-  if (p.status === 'final') return null
+  if (status === 'final') return null
 
-  async function run(fn: () => Promise<{ error?: string }>, success: string) {
+  async function run(fn: () => Promise<{ error?: string }>, ok: string) {
     setBusy(true)
     const res = await fn()
     setBusy(false)
-    if (res.error) {
-      toast.error(res.error)
-      return
-    }
-    toast.success(success)
-    setMode(null)
-    setMessage('')
-    setReason('')
-    setNote('')
-    setFile(null)
-    router.refresh()
-  }
-
-  async function submitNewVersion() {
-    if (!file) return toast.error('Choose a PDF file.')
-    if (!note.trim()) return toast.error('Add a note describing what changed.')
-    if (file.type !== 'application/pdf') return toast.error('Only PDF files are allowed.')
-    if (file.size > MAX_BYTES) return toast.error('File is larger than 25 MB.')
-
-    setBusy(true)
-    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    // Random suffix so a retry after a failed attempt never collides with an orphan file
-    const path = `${p.orgId}/${p.documentId}/v${p.nextVersion}_${crypto.randomUUID().slice(0, 8)}_${safe}`
-
-    const supabase = createClient()
-    const { error: upErr } = await supabase.storage
-      .from('documents')
-      .upload(path, file, { contentType: 'application/pdf', upsert: false })
-    if (upErr) {
-      setBusy(false)
-      return toast.error('Upload failed: ' + upErr.message)
-    }
-
-    const res = await uploadVersion({
-      documentId: p.documentId,
-      filePath: path,
-      fileName: file.name,
-      note,
-    })
-    setBusy(false)
     if (res.error) return toast.error(res.error)
-
-    toast.success(`v${p.nextVersion} uploaded`)
-    setMode(null)
-    setNote('')
-    setFile(null)
+    toast.success(ok)
     router.refresh()
   }
 
-  /* ---------------- Customer ---------------- */
-  if (p.role === 'customer') {
-    if (!p.isLive) return null
-    const canApprove = ['uploaded', 'in_review', 'revised'].includes(p.status)
-    const canRequest = canApprove || p.status === 'approved'
+  const isCustomer = role === 'customer'
+  const canApprove = ['uploaded', 'in_review', 'revised'].includes(status)
 
-    return (
-      <div className="space-y-3 rounded-md border p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {canApprove && (
-            <LoadingButton
-              loading={busy}
-              onClick={() =>
-                confirm('Approve this version?') &&
-                run(() => customerSetStatus(p.documentId, 'approve'), 'Version approved')
-              }
-            >
-              Approve
-            </LoadingButton>
-          )}
-          {canRequest && (
-            <LoadingButton
-              variant="outline"
-              loading={busy}
-              onClick={() => setMode(mode === 'changes' ? null : 'changes')}
-            >
-              Request changes
-            </LoadingButton>
-          )}
-          {p.status === 'changes_requested' && (
-            <p className="text-sm text-muted-foreground">
-              Changes requested. Waiting for the business to upload a revision.
-            </p>
-          )}
-          {p.status === 'approved' && (
-            <p className="text-sm text-muted-foreground">
-              You approved this version. Waiting for the business to finalize it.
-            </p>
-          )}
-        </div>
-
-        {mode === 'changes' && (
-          <div className="space-y-2">
-            <Label htmlFor="msg">Summary of the changes you need (optional)</Label>
-            <Textarea
-              id="msg"
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="e.g. Please revise clause 4 and the payment terms."
-            />
-            <LoadingButton
-              loading={busy}
-              onClick={() =>
-                run(() => customerSetStatus(p.documentId, 'request_changes', message), 'Changes requested')
-              }
-            >
-              Send request
-            </LoadingButton>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  /* ---------------- Business: viewing an older point in time ---------------- */
-  if (!p.isLive) {
-    if (!p.canRestore) return null
-    return (
-      <div className="flex flex-wrap items-center gap-3 rounded-md border p-3">
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#BFCBD0] bg-white/70 p-3">
+      {isCustomer && canApprove && (
         <LoadingButton
           loading={busy}
+          className="bg-[#4F7F2E] text-white hover:bg-[#3F6A25]"
+          onClick={() => confirm('Approve this document?') && run(() => approveDocument(documentId), 'Document approved')}
+        >
+          <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
+        </LoadingButton>
+      )}
+
+      {!isCustomer && status === 'approved' && (
+        <LoadingButton
+          loading={busy}
+          className="bg-[#4F7F2E] text-white hover:bg-[#3F6A25]"
           onClick={() =>
-            confirm(`Restore v${p.viewedVersionNumber} as a new version? Nothing is deleted.`) &&
-            run(
-              () => restoreVersion({ documentId: p.documentId, versionId: p.viewedVersionId }),
-              'Restored as a new version'
-            )
+            confirm('Mark this document as FINAL? It will be locked: no more comments.') &&
+            run(() => markFinal(documentId), 'Document marked as final')
           }
         >
-          Restore v{p.viewedVersionNumber} as new version
+          <Lock className="mr-2 h-4 w-4" /> Mark as final
         </LoadingButton>
-        <p className="text-sm text-muted-foreground">
-          Creates v{p.nextVersion} from this file. All history stays intact.
-        </p>
-      </div>
-    )
-  }
-
-  /* ---------------- Business: latest version ---------------- */
-  return (
-    <div className="space-y-3 rounded-md border p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <LoadingButton loading={busy} onClick={() => setMode(mode === 'upload' ? null : 'upload')}>
-          Upload new version
-        </LoadingButton>
-        {p.status === 'approved' && (
-          <LoadingButton
-            variant="outline"
-            loading={busy}
-            onClick={() =>
-              confirm(
-                `Mark v${p.viewedVersionNumber} as the FINAL version? This locks the document: no more comments or versions.`
-              ) && run(() => markFinal(p.documentId), 'Document marked as final')
-            }
-          >
-            Mark as final
-          </LoadingButton>
-        )}
-        {p.status === 'changes_requested' && (
-          <div className="w-full space-y-2">
-          <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900">
-          <p className="font-medium">The dealer requested changes.</p>
-          {p.requestMessage && <p className="mt-1">“{p.requestMessage}”</p>}
-          {/* <p className="mt-1 text-xs">
-          Upload a revised version, or mark it as revised without changes and explain why.
-          </p> */}
-          </div>
-          {/* <LoadingButton
-          variant="outline"
-          loading={busy}
-          onClick={() => setMode(mode === 'decline' ? null : 'decline')}
-          >
-          Mark as revised (no file change)
-          </LoadingButton> */}
-          <Button
-  disabled={busy}
-  className="bg-[#7C7AA6] text-white transition-colors hover:bg-[#65638f]"
-  onClick={() => setMode(mode === 'decline' ? null : 'decline')}
->
-  Mark as revised 
-</Button>
-          </div>
-          )}
-        {p.status === 'approved' && (
-          <p className="text-sm text-muted-foreground">Approved by the customer.</p>
-        )}
-        {p.status === 'revised' && p.revisedNote && (
-          <div className="w-full rounded-md border border-purple-200 bg-purple-50 p-3 text-sm text-purple-900">
-          <p className="font-medium">The business reviewed your request and made no file changes.</p>
-          <p className="mt-1">Reason: “{p.revisedNote}”</p>
-          <p className="mt-1 text-xs">You can approve this version or request changes again.</p>
-          </div>
-        )}
-      </div>
-
-      {mode === 'upload' && (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <Label htmlFor="vfile">PDF file for v{p.nextVersion} (max 25 MB)</Label>
-            <Input
-              id="vfile"
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vnote">What changed? (required)</Label>
-            <Textarea
-              id="vnote"
-              rows={2}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="e.g. Updated clause 4 per customer comment"
-            />
-          </div>
-          <LoadingButton loading={busy} onClick={submitNewVersion}>
-            {busy ? 'Uploading…' : `Upload v${p.nextVersion}`}
-          </LoadingButton>
-        </div>
       )}
-      {mode === 'decline' && (
-        <div className="space-y-2">
-        <Label htmlFor="reason">Why are no changes being made? (required, the dealer will see this)</Label>
-        <Textarea
-        id="reason"
-        rows={3}
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="e.g. Clause 4 is a standard term and can't be changed. See reply on the comment."
-        />
-       {/* <LoadingButton
-       loading={busy || !reason.trim()}
-       onClick={() =>
-        run(
-          () => markRevisedNoChanges({ documentId: p.documentId, note: reason }),
-          'Marked as revised'
-        )
-       }
-       >
-       Confirm: mark as revised
-       </LoadingButton> */}
-       <Button
-  disabled={!reason.trim() || busy}
-  className="bg-[#7C7AA6] text-white hover:bg-[#65638f] disabled:opacity-50"
-  onClick={() =>
-    run(
-      () => markRevisedNoChanges({ documentId: p.documentId, note: reason }),
-      'Marked as revised'
-    )
-  }
->
-  {busy ? 'Saving…' : 'Confirm: mark as revised'}
-</Button>
-       </div>
-      )}
+
+      <p className="text-sm text-[#2F3556]/70">
+        {isCustomer && status === 'approved' && 'You approved this document. Waiting for the business to finalize it.'}
+        {isCustomer && status !== 'approved' && 'Comment on any text, then approve when you are happy with the document.'}
+        {!isCustomer && status === 'approved' && 'Approved by the dealer. You can mark it as final.'}
+        {!isCustomer && status !== 'approved' && 'Waiting for the dealer to review and approve.'}
+      </p>
     </div>
   )
 }

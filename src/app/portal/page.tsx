@@ -1,37 +1,31 @@
-import Link from 'next/link'
 import { requireProfile } from '@/lib/auth'
-import { StatusBadge } from '@/components/status-badge'
+import { DocCard } from '@/components/doc-card'
+import type { Category } from '@/lib/categories'
 
 export default async function Portal() {
   const { supabase } = await requireProfile()
-  // No manual org filter on purpose: RLS alone restricts this.
+  // No manual dealer filter on purpose: row-level security restricts this
   const { data: docs } = await supabase
     .from('documents')
-    .select('id, title, status, created_at')
+    .select('id, title, status, category, created_at')
     .order('created_at', { ascending: false })
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Commercial Policy</h1>
+    <div className="space-y-4 text-[#2F3556]">
+      <h1 className="text-3xl font-bold">My documents</h1>
       {docs?.length === 0 && <p className="text-muted-foreground">Nothing shared with you yet.</p>}
-      <ul className="divide-y rounded-md border">
+      <div className="space-y-3">
         {docs?.map((d) => (
-          <li key={d.id}>
-            <Link
-              href={`/portal/documents/${d.id}`}
-              className="flex items-center justify-between p-4 hover:bg-muted/50"
-            >
-              <div>
-                <p className="font-medium">{d.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(d.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <StatusBadge status={d.status} />
-            </Link>
-          </li>
+          <DocCard
+            key={d.id}
+            href={`/portal/documents/${d.id}`}
+            title={d.title}
+            category={d.category as Category}
+            status={d.status}
+            date={d.created_at}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
